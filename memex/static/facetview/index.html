@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Facet Search</title>
+
+  <script type="text/javascript" src="vendor/jquery/1.7.1/jquery-1.7.1.min.js"></script>
+
+  <link rel="stylesheet" href="vendor/bootstrap/css/bootstrap.min.css">
+  <script type="text/javascript" src="vendor/bootstrap/js/bootstrap.min.js"></script>  
+
+  <script type="text/javascript" src="vendor/linkify/1.0/jquery.linkify-1.0-min.js"></script>  
+  
+  <link rel="stylesheet" href="vendor/jquery-ui-1.8.18.custom/jquery-ui-1.8.18.custom.css">
+  <script type="text/javascript" src="vendor/jquery-ui-1.8.18.custom/jquery-ui-1.8.18.custom.min.js"></script>
+
+  <script type="text/javascript" src="jquery.facetview.js"></script>
+
+  <link rel="stylesheet" href="css/facetview.css">
+
+  <link rel="stylesheet" href="css/style.css">
+
+  <link rel="stylesheet" href="vendor/jqzoom_ev-2.3/css/jquery.jqzoom.css">
+  <script type="text/javascript" src="vendor/jqzoom_ev-2.3/js/jquery.jqzoom-core.js"></script>
+
+  <link rel="stylesheet" href="vendor/leaflet-0.6.2/leaflet.css">
+  <link rel="stylesheet" href="vendor/Leaflet.draw/dist/leaflet.draw.css">
+  <script type="text/javascript" src="vendor/leaflet-0.6.2/leaflet.js"></script>
+  <script type="text/javascript" src="vendor/Leaflet.draw/dist/leaflet.draw.js"></script>
+  <style>
+    .map {
+      width: 140px;
+      height: 140px;
+    }
+
+    .btn {
+      vertical-align: top;
+    }
+  </style>
+
+  <script type="text/javascript">
+jQuery(document).ready(function($) {
+  $('.facet-view-simple').facetview({
+    search_url: 'http://grq.jpl.nasa.gov:8878/query/aria?',
+    search_index: 'elasticsearch',
+    facets: [
+        {'field':'dataset', 'display': 'dataset'}, 
+        {'field':'metadata.spacecraftName', 'display': 'spacecraft'},
+        {'field':'metadata.direction', 'display': 'orbit direction'},
+        {'field':'metadata.lookDirection', 'display': 'look direction'},
+        {'field':'metadata.orbitNumber', 'display': 'orbit number'},
+        {'field':'metadata.orbitRepeat', 'display': 'orbit repeat'},
+        {'field':'metadata.trackNumber', 'display': 'track number'},
+        {'field':'metadata.beamNumber', 'display': 'beam number'},
+        {'field':'metadata.version', 'display': 'version'},
+        {'field':'metadata.latitudeIndexMin', 'display': 'lat index min'},
+        {'field':'metadata.latitudeIndexMax', 'display': 'lat index max'},
+        {'field':'metadata.dfas.RequestorUserId.untouched', 'display': 'requestor'},
+        {'field':'metadata.dfdn.ProductType.untouched', 'display': 'product type'},
+        {'field':'metadata.dfdn.AcquistionMode', 'display': 'acquisition mode'},
+        {'field':'metadata.dfdn.LookSide', 'display': 'look side'},
+        {'field':'metadata.dfdn.DeliveryMode', 'display': 'delivery mode'},
+        {'field':'metadata.tags.untouched', 'display': 'tags'},
+        {'field':'continent.untouched', 'display': 'continent'},
+        {'field':'city.country_name.untouched', 'display': 'country'},
+        {'field':'city.admin1_name.untouched', 'display': 'region'},
+        {'field':'city.admin2_name.untouched', 'display': 'subregion'},
+        {'field':'city.name.untouched', 'display': 'city'}
+    ],
+    paging: {
+      from: 0,
+      size: 10
+    },
+    pager_on_top: true,
+    sort: [{ '_timestamp': { "order": "desc"} }],
+    fields: [ '_timestamp', 'id', 'dataset', 'metadata', 'urls', 'browse_urls', 'city', 'continent', 'location' ],
+    display_images: false,
+    result_display: [
+      [
+        {
+          "pre": " <strong>",
+          "field": "id",
+          "post": "</strong>"
+        },
+        {
+          "pre": " (",
+          "field": "dataset",
+          "post": ")"
+        }
+      ],
+      [
+        {
+          "pre": '<table><tr><td><a target="_blank" href="',
+          "field": "urls",
+          "post": '/browse.png" class="zoom">'
+        },
+        {
+          "pre": '<img src="',
+          "field": "browse_urls",
+          "post": '" class="img-rounded" width="140px" height="140px" /></a>'
+        },
+        {
+          "pre": "<div id='map_",
+          "field": "id",
+          "post": "' class='map'></div></td>"
+        }
+      ],
+      [
+        {
+          "pre": "<td><div class='hidden'>",
+          "field": "id",
+          "post": "</div>"
+        },
+        {
+          "pre": "tags: <font color='blue'>",
+          "field": "metadata.tags",
+          "post": "</font>"
+        }
+      ],
+      [
+        {
+          "pre": "continent: <font color='blue'>",
+          "field": "continent",
+          "post": "</font>"
+        }
+      ],
+      [
+        {
+          "pre": "location: <div class='hidden'>",
+          "field": "id",
+          "post": "</div><font color='blue'>"
+        },
+        {
+          "pre": "",
+          "field": "city.admin2_name",
+          "post": ", "
+        },
+        {
+          "pre": "",
+          "field": "city.admin1_name",
+          "post": ", "
+        },
+        {
+          "pre": "",
+          "field": "city.country_name",
+          "post": "</font>"
+        }
+      ],
+      [
+        {
+          "pre": "cities: <font color='blue'>",
+          "field": "city.name",
+          "post": "</font>"
+        }
+      ],
+      [
+        {
+          "pre": "<script>$(function() { var map = L.map('map_",
+          "field": "id",
+          "post": "', {worldCopyJump: true, center: [0,0], zoom: 0, zoomControl: false});\n" +
+                  "L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {\n" +
+                  "  maxZoom: 18\n" +
+                  "}).addTo(map);\n"
+        },
+        {
+          "pre": "var coords = [",
+          "field": "location.coordinates",
+          "post": "];\n" +
+                  "var coords_geojson = [];\n" +
+                  "for (var i=0; i<coords.length; i++) {\n" +
+                  "  if (i%2 == 0) {\n" +
+                  "    var point = [ coords[i], coords[i+1] ];\n" +
+                  "    coords_geojson.push(point);\n" +
+                  "  }\n" +
+                  "}\n" +
+                  "var geojson = {\n" +
+                  "  'type': 'Feature',\n" +
+                  "  'properties': {\n" +
+                  "    'name': 'test name',\n" +
+                  "    'amenity': 'test amenity',\n" +
+                  "    'popupContent': 'This is the popup content'\n" +
+                  "  },\n" +
+                  "  'geometry': {\n" +
+                  "    'type': 'Polygon',\n" +
+                  "    'coordinates': [coords_geojson]\n" +
+                  "  }\n" +
+                  "};\n" +
+                  "L.geoJson(geojson).addTo(map);\n"
+        },
+        {
+          "pre": "var center = [",
+          "field": "metadata.center.coordinates",
+          "post": "];\n" +
+                 "map.setView([center[1], center[0]], 7);\n" +
+                  "});\n" +
+                  "<\/script>"
+        },
+        {
+          "pre": "bbox: <font color='blue'>",
+          "field": "metadata.bbox",
+          "post": "</font>"
+        }
+      ],
+      [
+        {
+          "pre": "sensing start: <font color='blue'>",
+          "field": "metadata.sensingStart",
+          "post": "</font> | "
+        },
+        {
+          "pre": "sensing stop: <font color='blue'>",
+          "field": "metadata.sensingStop",
+          "post": "</font>"
+        }
+      ],
+      [
+        {
+          "pre": "spacecraft name: <font color='blue'>",
+          "field": "metadata.spacecraftName",
+          "post": "</font> | "
+        },
+        {
+          "pre": "orbit direction: <font color='blue'>",
+          "field": "metadata.direction",
+          "post": "</font> | "
+        },
+        {
+          "pre": "look direction: <font color='blue'>",
+          "field": "metadata.lookDirection",
+          "post": "</font> | "
+        },
+        {
+          "pre": "orbit number: <font color='blue'>",
+          "field": "metadata.orbitNumber",
+          "post": "</font> | "
+        },
+        {
+          "pre": "orbit repeat: <font color='blue'>",
+          "field": "metadata.orbitRepeat",
+          "post": "</font> | "
+        },
+        {
+          "pre": "track number: <font color='blue'>",
+          "field": "metadata.trackNumber",
+          "post": "</font>"
+        }
+      ],
+      [
+        {
+          "pre": "product type: <font color='blue'>",
+          "field": "metadata.dfas.ProductType",
+          "post": "</font>"
+        }
+      ],
+      [
+        {
+          "pre": "requestor: <font color='blue'>",
+          "field": "metadata.dfas.RequestorUserId",
+          "post": "</font>"
+        }
+      ],
+      [
+        {
+          "pre": ' <a target="_blank" href="',
+          "field": "urls",
+          "post": '">Download</a></td></tr></table>'
+        }
+      ]
+    ]
+  });
+  // set up form
+  $('.demo-form').submit(function(e) {
+    e.preventDefault();
+    var $form = $(e.target);
+    var _data = {};
+    $.each($form.serializeArray(), function(idx, item) {
+      _data[item.name] = item.value;
+    });
+    $('.facet-view-here').facetview(_data);
+  });
+
+  // open up all facets on page load
+  $('.facetview_filtershow').each(function(index, value) {
+    $(value).click();
+  });
+});
+  </script>
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="#">Facet Search</a>
+      <ul class="nav">
+        <li><a href="http://aria.jpl.nasa.gov">Home</a></li>
+        <li><a href="http://grq.jpl.nasa.gov/facetview">Facet Search</a></li>
+        <li><a href="http://aria-dav.jpl.nasa.gov">Repository</a></li>
+        <li><a href="http://aria1.jpl.nasa.gov/public/csk/footprint/csk_scenes_downloaded_by_aria.kml">KML</a></li>
+        <li><a href="http://mozart-ariamh.jpl.nasa.gov:8888/">Jobs</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="container"> 
+  <div class="content">
+    <div class="page-header">
+      <h1>
+        Facet Search <small>faceted search interface for GeoRegionQuery</small>
+      </h1>
+    </div>
+
+    <!--<h4>GRQ facets</h4>-->
+    <div class="facet-view-simple"></div>
+
+    <!--
+    <h2>More Complex Demo</h2>
+    <p>Here we provide you with the option to supply a SOLR or ES endpoint. In
+    normal usage you will configure the search endpoint when you initialize
+    FacetView in your code.</p>
+    <form class="demo-form">
+      <fieldset>
+        <label for="search_url">SOLR/ES Endpoint</label>
+        <div class="input">
+          <input type="text" name="search_url" class="span9" value="http://openspending.org/api/search?" />
+        </div>
+        <div class="clearfix"></div>
+        <div class="input">
+          <div class="inline-inputs">
+            <input type="radio" checked="" name="search_index" value="solr" /><span>SOLR</span>
+            <input type="radio" name="search_index" value="elasticsearch" /><span>ElasticSearch</span>
+          </div>
+        </div>
+        <div class="clearfix"></div>
+        <div class="input">
+          <button type="submit" class="btn primary">Go &raquo;</button>
+        </div>
+      </fieldset>
+    </form>
+    <div class="facet-view-here"></div>
+    -->
+
+  </div>
+
+</div>
+</body>
+</html>

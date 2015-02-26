@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>CEOS-GCMD Platform/Instrument Facet Search</title>
+
+  <script type="text/javascript" src="{{ url_for('static', filename='facetview/vendor/jquery/1.7.2/jquery-1.7.2.min.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='jquery-validation-1.12.0/dist/jquery.validate.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='jquery-validation-1.12.0/lib/jquery.form.js') }}"></script>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='facetview/vendor/bootstrap-2.3.2/css/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='facetview/vendor/bootstrap-2.3.2/css/bootstrap-responsive.min.css') }}">
+  <script type="text/javascript" src="{{ url_for('static', filename='facetview/vendor/bootstrap-2.3.2/js/bootstrap.min.js') }}"></script>  
+
+  <script type="text/javascript" src="{{ url_for('static', filename='facetview/vendor/linkify/1.0/jquery.linkify-1.0-min.js') }}"></script>  
+  
+  <link rel="stylesheet" href="{{ url_for('static', filename='facetview/vendor/jquery-ui-1.8.18.custom/jquery-ui-1.8.18.custom.css') }}">
+  <script type="text/javascript" src="{{ url_for('static', filename='facetview/vendor/jquery-ui-1.8.18.custom/jquery-ui-1.8.18.custom.min.js') }}"></script>
+
+  <script type="text/javascript" src="{{ url_for('static', filename='facetview/jquery.facetview.js') }}"></script>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='facetview/css/facetview.css') }}">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='facetview/css/style.css') }}">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='facetview/vendor/jqzoom_ev-2.3/css/jquery.jqzoom.css') }}">
+  <script type="text/javascript" src="{{ url_for('static', filename='facetview/vendor/jqzoom_ev-2.3/js/jquery.jqzoom-core.js') }}"></script>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='facetview/vendor/leaflet-0.6.2/leaflet.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='facetview/vendor/Leaflet.draw/dist/leaflet.draw.css') }}">
+  <!--[if lte IE 8]>
+    <link rel="stylesheet" href="{{ url_for('static', filename='facetview/vendor/leaflet-0.6.2/leaflet.ie.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='facetview/vendor/Leaflet.draw/dist/leaflet.draw.ie.css') }}" />
+  <![endif]-->
+
+  <script type="text/javascript" src="{{ url_for('static', filename='facetview/vendor/leaflet-0.6.2/leaflet.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='facetview/vendor/Leaflet.draw/dist/leaflet.draw.js') }}"></script>
+
+  <!-- 
+  <link href="{{ url_for('static', filename='facetview/vendor/jQRangeSlider-5.5.0/css/iThing.css') }}" rel="stylesheet">
+  <script src="{{ url_for('static', filename='facetview/vendor/jQRangeSlider-5.5.0/jQAllRangeSliders-withRuler-min.js') }}"></script>
+  -->
+
+  <script src="{{ url_for('static', filename='JSON-js/json2.js') }}"></script>
+
+  <link href="{{ url_for('static', filename='facetview/vendor/bootstrap-tags/bootstrap-tags.css') }}" rel="stylesheet">
+  <script src="{{ url_for('static', filename='facetview/vendor/bootstrap-tags/bootstrap-tags.js') }}"></script>
+
+  <link href="{{ url_for('static', filename='tablecloth-1.0.0/assets/css/tablecloth.css' ) }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='tablecloth-1.0.0/assets/css/prettify.css' ) }}" rel="stylesheet"> 
+  <script src="{{ url_for('static', filename='tablecloth-1.0.0/assets/js/jquery.metadata.js' ) }}"></script>
+  <script src="{{ url_for('static', filename='tablecloth-1.0.0/assets/js/jquery.tablesorter.min.js' ) }}"></script>
+  <script src="{{ url_for('static', filename='tablecloth-1.0.0/assets/js/jquery.tablecloth.js' ) }}"></script>
+
+  <script src="{{ url_for('static', filename='jquery-tagcloud-0.5.0/jquery.tagcloud.js' ) }}"></script>
+
+  <style>
+    .location_search_map {
+      width: 100%;
+      height: 400px;
+    }
+
+    .map {
+      width: 250px;
+      height: 250px;
+    }
+
+    .btn {
+      vertical-align: top;
+    }
+
+    .modal {
+      width: 90%;
+      max-width: 1024px;
+      margin-left:auto;
+      margin-right:auto;
+    }
+
+    .modal .modal-header {
+      height: 10%;
+    }
+
+    .modal-body {
+      height: 90%;
+    }
+
+    .modal-body-div {
+      height: 100%;
+      overflow-y: auto;
+      width: 100%;
+    }
+
+    /* jquery validation */
+    label.valid {
+      width: 24px;
+      height: 24px;
+      background: url({{ url_for('static', filename='img/valid.png') }}) center center no-repeat;
+      display: inline-block;
+      text-indent: -9999px;
+    }
+
+    label.error {
+      font-weight: bold;
+      color: red;
+      padding: 2px 8px;
+      margin-top: 2px;
+    }
+
+    /* loading backdrop */
+    .loading-backdrop {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 1040;
+      background-color: #000000;
+    }
+
+    .loading-backdrop.fade {
+      opacity: 0;
+    }
+
+    .loading-backdrop, .loading-backdrop.fade.in {
+      opacity: 0.3;
+      filter: alpha(opacity=30);
+    }
+
+  </style>
+
+  <script type="text/javascript">
+
+function set_left_margin() {
+  return ($(window).width() - $(this).width())/2;
+}
+
+// global backdrop
+var backdrop = null;
+
+jQuery(document).ready(function($) {
+  Tags.bootstrapVersion = "2";
+
+  $('.facet-view-simple').facetview({
+    search_url: "{{ url_for('.query_ceos_gcmd') }}?",
+    search_index: 'elasticsearch',
+    facets: [
+        //{'field':'accuracy.raw', 'display': 'accuracy'},
+        {'field':'type.raw', 'display': 'type'},
+        {'field':'subtype.raw', 'display': 'subtype'},
+        {'field':'class.raw', 'display': 'class'},
+        {'field':'instrument_agencies.raw', 'display': 'instrument agencies'},
+        {'field':'instrument_status.raw', 'display': 'instrument status'},
+        {'field':'instrument_technology.raw', 'display': 'instrument technology'},
+        {'field':'instrument_type.raw', 'display': 'instrument type'},
+        {'field':'data_access.raw', 'display': 'data access'},
+        {'field':'data_format.raw', 'display': 'data format'},
+        //{'field':'measurements_and_applications.raw', 'display': 'measurements and applicatons'},
+        {'field':'spatial_resolution.raw', 'display': 'spatial resolution'},
+        {'field':'spatial_resolution_best.raw', 'display': 'spatial resolution best'},
+        {'field':'waveband_categories.raw', 'display': 'waveband categories'},
+        {'field':'wavebands.raw', 'display': 'wavebands'},
+        {'field':'source.raw', 'display': 'source'},
+    ],
+    time_fields: [
+    ],
+//    location_field: 'location',
+    json_fields: [
+    ],
+//    filterchoice_result_fields: {
+//        'metadata.version': 'metadata.version',
+//        'metadata.tags': 'metadata.tags.untouched',
+//        'metadata.corrections': 'metadata.corrections.untouched',
+//        'continent': 'continent.untouched',
+//        'city.admin2_name': 'city.admin2_name.untouched',
+//        'city.admin1_name': 'city.admin1_name.untouched',
+//        'city.country_name': 'city.country_name.untouched',
+//        'city.name': 'city.name.untouched',
+//        'metadata.spacecraftName': 'metadata.spacecraftName',
+//        'metadata.direction': 'metadata.direction',
+//        'metadata.lookDirection': 'metadata.lookDirection',
+//        'metadata.orbitNumber': 'metadata.orbitNumber',
+//        'metadata.orbitRepeat': 'metadata.orbitRepeat',
+//        'metadata.trackNumber': 'metadata.trackNumber',
+//        'metadata.beamNumber': 'metadata.beamNumber',
+//        'metadata.latitudeIndexMin': 'metadata.latitudeIndexMin',
+//        'metadata.latitudeIndexMax': 'metadata.latitudeIndexMax',
+//        'metadata.dfdn.ProductType': 'metadata.dfdn.ProductType.untouched',
+//        'metadata.dfas.RequestorUserId': 'metadata.dfas.RequestorUserId.untouched'
+//    },
+    enable_rangeselect: true,
+    //enable_locationselect: true,
+    paging: {
+      from: 0,
+      size: 10
+    },
+    pager_on_top: true,
+    sort: [{ 'instrument_name_short.raw': { "order": "asc"} }],
+    fields: [ '_timestamp', '_source'],
+    display_images: false,
+    pre_search_callback: function() {
+      if (backdrop === null) {
+        // fade the backdrop in
+        var animate = 'fade';
+        var doAnimate = $.support.transition && animate;
+        backdrop = $('<div class="loading-backdrop ' + animate + '" />').appendTo(document.body);
+        if (doAnimate) backdrop[0].offsetWidth;
+        backdrop.addClass('in');
+        if (doAnimate) backdrop.one($.support.transition.end, function() {});
+      }
+    },
+    post_search_callback: function() {
+      // remove the backdrop
+      $(".loading-backdrop").remove();
+      backdrop = null;
+    },
+    word_cloud: false,
+    result_display: [
+      [
+        {
+          "pre": " <strong>",
+          "field": "instrument_name_short",
+          "post": "</strong>"
+        },
+        {
+          "pre": " <font color='blue'>(",
+          "field": "instrument_name_full",
+          "post": ")</font>"
+        }
+      ],
+      [
+        {
+          "pre": "<b>type:</b> ",
+          "field": "type",
+          "post": ""
+        }
+      ],
+      [
+        {
+          "pre": "<b>subtype:</b> ",
+          "field": "subtype",
+          "post": ""
+        }
+      ],
+      [
+        {
+          "pre": "<b>class:</b> ",
+          "field": "class",
+          "post": ""
+        }
+      ],
+      [
+        {
+          "pre": "<b>status:</b> ",
+          "field": "instrument_status",
+          "post": ""
+        }
+      ],
+      [
+        {
+          "pre": "<b>technology:</b> ",
+          "field": "instrument_technology",
+          "post": ""
+        }
+      ],
+      [
+        {
+          "pre": "<b>instrument type:</b> ",
+          "field": "instrument_type",
+          "post": ""
+        }
+      ],
+      [
+        {
+          "pre": "<b>agencies:</b> ",
+          "field": "instrument_agencies",
+          "post": ""
+        }
+      ],
+      [
+        {
+          "pre": "<b>measurements and applications:</b> ",
+          "field": "measurements_and_applications",
+          "post": ""
+        }
+      ],
+      [
+        {
+          "pre": "<b>spatial resolution:</b> ",
+          "field": "spatial_resolution",
+          "post": ""
+        }
+      ],
+      [
+        {
+          "pre": "<b>spatial resolution best:</b> ",
+          "field": "spatial_resolution_best",
+          "post": ""
+        }
+      ],
+      [
+        {
+          "pre": "<b>swath width:</b> ",
+          "field": "swath_width",
+          "post": ""
+        }
+      ],
+      [
+        {
+          "pre": "<b>waveband categories:</b> ",
+          "field": "waveband_categories",
+          "post": ""
+        }
+      ],
+      [
+        {
+          "pre": "<b>wavebands:</b> ",
+          "field": "wavebands",
+          "post": ""
+        }
+      ],
+      [
+        {
+          "pre": "<b>source:</b> ",
+          "field": "source",
+          "post": ""
+        }
+      ]
+    ]
+  });
+
+  // init range_slider_start
+  /*
+  $( "#range_slider_starttime" ).dateRangeSlider({
+    bounds: {
+      min: new Date(2000, 0, 1),
+      max: new Date()
+    },
+    defaultValues: {
+      min: new Date(2000, 0, 1),
+      max: new Date()
+    } 
+  }); 
+  */
+
+  // set tablecloth
+  var rules_table = $('#rules_table').tablecloth({
+    theme: "stats",
+    striped: true,
+    condensed: true
+  });
+
+  // validate form
+  var validator = $( '#rule_form' ).validate({
+    rules: {
+      rule_name: {
+        required: true
+      },
+      query_string: {
+        required: true
+      },
+      workflow: {
+        minlength: 1,
+        required: true
+      }
+    },
+    messages: {
+      rule_name: "Please specify a name for this rule.",
+      workflow: "Please select an action."
+    }
+  });
+
+  // validate procthis form
+  var procthis_validator = $( '#procthis_form' ).validate({
+    rules: {
+      procthis_name: {
+        required: true
+      },
+      query_string: {
+        required: true
+      },
+      workflow: {
+        minlength: 1,
+        required: true
+      }
+    },
+    messages: {
+      procthis_name: "Please specify a name for this job.",
+      workflow: "Please select an action."
+    }
+  });
+
+  // show rules modal
+  $('#my_rules').on('click', function() {
+    $.ajax({
+      url: "user_rules/list",
+      success: function(data, sts, xhr) {
+        //console.log(data);
+        $('#general_error').html("");
+
+        // clear table
+        var tbody = $('#rules_table > tbody'); 
+        tbody.empty();
+
+        // populate table
+        for (var i=0; i < data.rules.length; i++) {
+          var status_cell = "<td><button class='btn btn-mini btn-danger toggle_rule' type='button' value='" +
+                            data.rules[i]['id'] + "'>Off</button></td>";
+          if (data.rules[i]['enabled'])
+            status_cell = "<td><button class='btn btn-mini btn-success toggle_rule' type='button' value='" +
+                          data.rules[i]['id'] + "'>On</button></td>";
+          tbody.append("<tr id='rule_" + data.rules[i]['id'] + "'>" +
+                       "<td>" + data.rules[i]['rule_name'] + "</td>" +
+                       "<td>" + data.rules[i]['query_string'] + "</td>" +
+                       "<td>" + data.rules[i]['workflow'] + "</td>" +
+                       "<td>" + data.rules[i]['kwargs'] + "</td>" +
+                       status_cell +
+                       "<td><button class='btn btn-mini btn-primary edit_rule' type='button' value='" + 
+                       data.rules[i]['id'] + "'>Edit</button></td>" +
+                       "<td><button class='btn btn-mini btn-warning remove_rule' type='button' value='" + 
+                       data.rules[i]['id'] + "' rule_name='" + data.rules[i]['rule_name'] + 
+                       "'>Delete</button></td></tr>");
+        }
+
+        // append handlers to status buttons
+        $('button.toggle_rule').on('click', function() {
+          var button = $(this);
+          var rule_id = button.attr('value');
+          var cur_status = button.text();
+          if (cur_status == "Off") {
+            var new_status_text = "On";
+            var new_status = "true";
+            var remove_class = "btn-danger";
+            var add_class = "btn-success";
+          }else {
+            var new_status_text = "Off";
+            var new_status = "false";
+            var remove_class = "btn-success";
+            var add_class = "btn-danger";
+          }
+          $.ajax({
+            type: "POST",
+            url: "user_rules/toggle_status",
+            data: {
+              id: rule_id,
+              enabled: new_status
+            },
+            success: function(data, sts, xhr) {
+              button.toggleClass(remove_class + " " + add_class).text(new_status_text);
+            },
+            error: function(xhr, sts, err) {
+              $('#general_error').html("Error: " + xhr.responseText);
+              $('#error_modal').modal('show').css({'left': set_left_margin});
+            }
+          });
+        });
+
+        // append handlers to delete buttons
+        $('button.remove_rule').on('click', function() {
+          var rule_id = $(this).attr('value');
+          var rule_name = $(this).attr('rule_name');
+          $('#delete_rule_name').text(rule_name);
+          $('#delete_rule_id').val(rule_id);
+          $('#confirm_delete_modal').modal('show').css({'left': set_left_margin});
+        });
+
+        // append handlers to edit buttons
+        $('button.edit_rule').on('click', function() {
+          var parent_tr = $(this).closest('tr');
+          var rule_id = $(this).attr('value');
+          $('#rule_id').val(rule_id);
+          $('#rule_name').val(parent_tr.children().eq(0).text());
+          $('#query_string').val(parent_tr.children().eq(1).text());
+          $('#workflow_val').val(parent_tr.children().eq(2).text());
+          $('#kwargs').val(parent_tr.children().eq(3).text());
+          $('#rule_modal_label').text("Edit Rule");
+          $('#rule_modal').modal('show').css({'left': set_left_margin});
+          $('#list_rules_modal').modal('hide');
+        });
+
+        // show modal
+        $('#list_rules_modal').modal('show').css({'left': set_left_margin});
+      },
+      error: function(xhr, sts, err) {
+        //console.log(xhr);
+        $('#general_error').html("Error: " + xhr.responseText);
+        $('#error_modal').modal('show').css({'left': set_left_margin});
+      }
+    });
+    return false;
+  });
+
+  // handler for confirm_delete_btn
+  $('#confirm_delete_btn').on('click', function() {
+    var rule_id = $('#delete_rule_id').val();
+    $.ajax({
+      type: "POST",
+      url: "user_rules/remove",
+      data: {
+        id: rule_id
+      },
+      success: function(data, sts, xhr) {
+        $('#rule_' + rule_id).remove();
+        $('#confirm_delete_modal').modal('hide');
+        $('#general_error').html("");
+      },
+      error: function(xhr, sts, err) {
+        $('#confirm_delete_modal').modal('hide');
+        $('#general_error').html("Error: " + xhr.responseText);
+        $('#error_modal').modal('show').css({'left': set_left_margin});
+      }
+    });
+  });
+
+  // handler for rule_modal
+  $('#rule_modal').on('show', function() {
+    $('#ajax_error').html("");
+    var rule_id = $('#rule_id').val();
+
+    // check if we're in add mode
+    if (rule_id === "") {
+      var edit_mode = false;
+      var cur_kwargs = {};
+
+      // reset everything
+      $('#dynamic_fields').empty();
+      validator.resetForm();
+
+      // populate query_string
+      var query_json = JSON.stringify(JSON.parse(QUERY_STRING).query, null, '  ');
+      $('#query_string').val(query_json);
+      //$('#query_string').val(query_json).attr('disabled', true);
+    }else {
+      var edit_mode = true;
+      var cur_kwargs = JSON.parse($('#kwargs').val());
+    }
+    //console.log("workflow_val: " + $('#workflow_val').val());
+    //console.log("kwargs: " + $('#kwargs').val());
+
+    // get actions config
+    $.ajax({
+      url: "user_rules/actions_config",
+      success: function(data, sts, xhr) {
+        //console.log(data);
+        // populate workflow/action select options
+        var workflow = $('#workflow');
+        workflow.empty();
+        workflow.append("<option value=''></option");
+        var actions_cfg = {};
+        for (var i=0; i < data.actions.length; i++) {
+          actions_cfg[data.actions[i].type] = data.actions[i];
+          var disabled = data.actions[i].public ? ">" : "disabled>";
+          workflow.append("<option value='" + data.actions[i].type + "' " +
+                          disabled + data.actions[i].label + "</option>");
+        }
+
+        // add handler to build dynamic form on selected option
+        workflow.change(function() {
+          // build dynamic form
+          var workflow_type = $(this).val();
+          var dyn_fields = $('#dynamic_fields');
+          dyn_fields.empty();
+          var kwargs = actions_cfg[workflow_type].kwargs;
+          for (var i=0; i < kwargs.length; i++) {
+            var kwarg = kwargs[i];
+            if (kwarg.type == "textbox") {
+              dyn_fields.append("<div class='control-group'>" +
+                                "<label class='control-label' for='" + 
+                                kwarg.name + "'>" + kwarg.name + "</label>" +
+                                "<div class='controls'>" +
+                                "<input class='field span4' type='text' name='" + kwarg.name +
+                                "' placeholder='" + kwarg.placeholder + "'></div></div>");
+              $('#rule_form input[name=' + kwarg.name + ']').rules("add", kwarg.validator);
+              if (kwarg.name in cur_kwargs)
+                $('#dynamic_fields input[name=' + kwarg.name + ']').val(cur_kwargs[kwarg.name]);
+            }else if (kwarg.type == "textarea") {
+              dyn_fields.append("<div class='control-group'>" +
+                                "<label class='control-label' for='" + 
+                                kwarg.name + "'>" + kwarg.name + "</label>" +
+                                "<div class='controls'>" +
+                                "<textarea class='field span4' type='textarea' rows='5' name='" + kwarg.name +
+                                "' placeholder='" + kwarg.placeholder + "'></textarea></div></div>");
+              $('#rule_form textarea[name=' + kwarg.name + ']').rules("add", kwarg.validator);
+              if (kwarg.name in cur_kwargs)
+                $('#dynamic_fields textarea[name=' + kwarg.name + ']').val(cur_kwargs[kwarg.name]);
+            }else {
+            }
+          }
+        });
+
+        // select the current workflow
+        if (edit_mode) $('#workflow').val($('#workflow_val').val()).change();
+      },
+      error: function(xhr, sts, err) {
+        //console.log(xhr.responseData);
+        $('#general_error').html("Error: " + xhr.responseText);
+        $('#error_modal').modal('show').css({'left': set_left_margin});
+      }
+    });
+  });
+
+  $('#rule_modal').on('hide', function() {
+    $('#rule_id').val("");
+    $('#workflow_val').val("");
+    $('#kwargs').val("");
+  });
+
+  // handler for rule button
+  $('#rule_btn').on('click', function() {
+    var rule_id = $('#rule_id').val();
+
+    // check if we're in add mode
+    if (rule_id === "") var edit_mode = false;
+    else var edit_mode = true;
+
+    if ($('#rule_form').valid()) {
+      //console.log("workflow: " + $('#workflow').val());
+      //console.log("rule_name: " + $('#rule_name').val());
+      //console.log("query_string: " + $('#query_string').val());
+      df_fields = {};
+      $.each($('#dynamic_fields').find('.field'), function(idx, value) {
+        var dyn_input = $(value);
+        df_fields[dyn_input.attr('name')] = dyn_input.val();
+      });
+
+      if (edit_mode) {
+        var rule_data = {
+          id: rule_id,
+          rule_name: $('#rule_name').val(),
+          workflow: $('#workflow').val(),
+          query_string: $('#query_string').val(),
+          kwargs: JSON.stringify(df_fields, null, '  ')
+        };
+        var update_url = "user_rules/edit";
+      }else {
+        var rule_data = {
+          rule_name: $('#rule_name').val(),
+          workflow: $('#workflow').val(),
+          query_string: $('#query_string').val(),
+          kwargs: JSON.stringify(df_fields, null, '  ')
+        };
+        var update_url = "user_rules/add";
+      }
+      $.ajax({
+        type: "POST",
+        url: update_url,
+        data: rule_data,
+        success: function(data, sts, xhr) {
+          //console.log(data);
+          $('#ajax_error').html("");
+          $('#rule_modal').modal('hide');
+        },
+        error: function(xhr, sts, err) {
+          //console.log(xhr);
+          var resp = JSON.parse(xhr.responseText);
+          $('#ajax_error').html("Error: " + resp.message);
+        }
+      });
+    }
+  });
+
+  // handler for procthis_modal
+  $('#procthis_modal').on('show', function() {
+    $('#procthis_ajax_error').html("");
+
+    var cur_kwargs = {};
+
+    // reset everything
+    $('#procthis_dynamic_fields').empty();
+    procthis_validator.resetForm();
+
+    // populate query_string
+    var query_json = JSON.stringify(JSON.parse(QUERY_STRING).query, null, '  ');
+    $('#procthis_query_string').val(query_json);
+    //$('#procthis_query_string').val(query_json).attr('disabled', true);
+    //console.log("workflow_val: " + $('#procthis_workflow_val').val());
+    //console.log("kwargs: " + $('#procthis_kwargs').val());
+
+    // get actions config
+    $.ajax({
+      url: "user_rules/actions_config",
+      success: function(data, sts, xhr) {
+        //console.log(data);
+        // populate workflow/action select options
+        var workflow = $('#procthis_workflow');
+        workflow.empty();
+        workflow.append("<option value=''></option");
+        var actions_cfg = {};
+        for (var i=0; i < data.actions.length; i++) {
+          actions_cfg[data.actions[i].type] = data.actions[i];
+          var disabled = data.actions[i].public ? ">" : "disabled>";
+          workflow.append("<option value='" + data.actions[i].type + "' " +
+                          disabled + data.actions[i].label + "</option>");
+        }
+
+        // add handler to build dynamic form on selected option
+        workflow.change(function() {
+          // build dynamic form
+          var workflow_type = $(this).val();
+          var dyn_fields = $('#procthis_dynamic_fields');
+          dyn_fields.empty();
+          var kwargs = actions_cfg[workflow_type].kwargs;
+          for (var i=0; i < kwargs.length; i++) {
+            var kwarg = kwargs[i];
+            if (kwarg.type == "textbox") {
+              dyn_fields.append("<div class='control-group'>" +
+                                "<label class='control-label' for='" + 
+                                kwarg.name + "'>" + kwarg.name + "</label>" +
+                                "<div class='controls'>" +
+                                "<input class='field span4' type='text' name='" + kwarg.name +
+                                "' placeholder='" + kwarg.placeholder + "'></div></div>");
+              $('#procthis_form input[name=' + kwarg.name + ']').rules("add", kwarg.validator);
+              if (kwarg.name in cur_kwargs)
+                $('#procthis_dynamic_fields input[name=' + kwarg.name + ']').val(cur_kwargs[kwarg.name]);
+            }else if (kwarg.type == "textarea") {
+              dyn_fields.append("<div class='control-group'>" +
+                                "<label class='control-label' for='" + 
+                                kwarg.name + "'>" + kwarg.name + "</label>" +
+                                "<div class='controls'>" +
+                                "<textarea class='field span4' type='textarea' rows='5' name='" + kwarg.name +
+                                "' placeholder='" + kwarg.placeholder + "'></textarea></div></div>");
+              $('#procthis_form textarea[name=' + kwarg.name + ']').rules("add", kwarg.validator);
+              if (kwarg.name in cur_kwargs)
+                $('#procthis_dynamic_fields textarea[name=' + kwarg.name + ']').val(cur_kwargs[kwarg.name]);
+            }else {
+            }
+          }
+        });
+      },
+      error: function(xhr, sts, err) {
+        //console.log(xhr.responseData);
+        $('#general_error').html("Error: " + xhr.responseText);
+        $('#error_modal').modal('show').css({'left': set_left_margin});
+      }
+    });
+  });
+
+  // handler for procthis button
+  $('#procthis_btn').on('click', function() {
+    if ($('#procthis_form').valid()) {
+      //console.log("workflow: " + $('#procthis_workflow').val());
+      //console.log("procthis_name: " + $('#procthis_name').val());
+      //console.log("query_string: " + $('#procthis_query_string').val());
+      df_fields = {};
+      $.each($('#procthis_dynamic_fields').find('.field'), function(idx, value) {
+        var dyn_input = $(value);
+        df_fields[dyn_input.attr('name')] = dyn_input.val();
+      });
+
+      var procthis_data = {
+        name: $('#procthis_name').val(),
+        workflow: $('#procthis_workflow').val(),
+        query_string: $('#procthis_query_string').val(),
+        kwargs: JSON.stringify(df_fields, null, '  ')
+      };
+      var submit_url = "user_rules/submit_job";
+      $.ajax({
+        type: "POST",
+        url: submit_url,
+        data: procthis_data,
+        success: function(data, sts, xhr) {
+          //console.log(data);
+          $('#procthis_ajax_error').html("");
+          $('#procthis_modal').modal('hide');
+        },
+        error: function(xhr, sts, err) {
+          //console.log(xhr);
+          try {
+            var resp = JSON.parse(xhr.responseText);
+            $('#procthis_ajax_error').html("Error: " + resp.message);
+          } catch(jerr) {
+            $('#procthis_ajax_error').html("Error: " + err);
+          }
+        }
+      });
+    }
+  });
+
+  // handler for grq_call_modal
+  $('#grq_call_modal').on('show', function() {
+    var grq_query = JSON.parse(QUERY_STRING);
+    if ('facets' in grq_query) delete grq_query['facets'];
+    var grq_qs = JSON.stringify(grq_query, null);
+    var grq_url = "{{ config['GRQ_ES_URL'] }}&source=" + grq_qs;
+    $('#grq_call_url').html("<a href='" + grq_url + "' target='_blank'>" + grq_url + "</a>");
+  });
+
+  // open up all facets on page load
+  $('.facetview_filtershow').each(function(index, value) {
+    $(value).click();
+  });
+});
+  </script>
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="#">CEOS-GCMD Platform/Instrument Facet Search</a>
+      <ul class="nav">
+        <li><a href="/">Home</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+    <!--Alerts-->
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+      <div class="container"> 
+        <div class="alert alert-success">
+          <a href="#" class="close" data-dismiss="alert">&times;</a>
+          {{ message }}
+        </div>
+      </div>
+      {% endfor %}
+      <script>
+        window.setTimeout( function() {
+          $( ".alert" ).fadeTo(500, 0).slideUp(500, function() {
+            $(this).remove();
+          });
+        }, 5000);
+      </script>
+    {% endif %}
+    {% endwith %}
+
+<div class="container"> 
+  <div class="content">
+    <div class="page-header">
+      <h1>
+        Facet Search <small>faceted search interface for CEOS-GCMD Platform/Instrument</small>
+      </h1>
+    </div>
+
+    <!--<h4>GRQ facets</h4>-->
+    <div class="facet-view-simple"></div>
+
+    <!-- create rule modal -->
+    <div id="rule_modal" class="modal hide fade" tabindex="-1" role="dialog"
+         aria-labelledby="rule_modal_label" aria-hidden="true" data-backdrop="static"
+         data-keyboard="false">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="rule_modal_label">Monitor This</h3>
+      </div>
+      <div class="modal-body">
+        <div class="modal-body-div">
+          <form id="rule_form" class="form-horizontal">
+            <input type="hidden" id="rule_id"/>
+            <input type="hidden" id="workflow_val"/>
+            <input type="hidden" id="kwargs"/>
+            <div class="control-group">
+              <label class="control-label" for="rule_name">Rule name</label>
+              <div class="controls">
+                <input class="field span4" type="text" id="rule_name" name="rule_name" placeholder="e.g. Email Calimap">
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="query_string">Condition</label>
+              <div class="controls">
+                <textarea class="field span4" type="textarea" rows="5" id="query_string" name="query_string"></textarea>
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="workflow">Action</label>
+              <div class="controls">
+                <select class="field span4" name="workflow" id="workflow"></select>
+              </div>
+            </div>
+            <fieldset id="dynamic_fields" />
+          </form>
+        </div>
+        <div>
+          <label id="ajax_error" class="error" style="display: block;"></label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn cancel_rule" data-dismiss="modal" aria-hidden="true">Cancel</button>
+        <button id="rule_btn" class="btn btn-primary">OK</button>
+      </div>
+    </div>
+
+    <!-- process this modal -->
+    <div id="procthis_modal" class="modal hide fade" tabindex="-1" role="dialog"
+         aria-labelledby="procthis_modal_label" aria-hidden="true" data-backdrop="static"
+         data-keyboard="false">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="procthis_modal_label">Monitor This</h3>
+      </div>
+      <div class="modal-body">
+        <div class="modal-body-div">
+          <form id="procthis_form" class="form-horizontal">
+            <input type="hidden" id="procthis_workflow_val"/>
+            <input type="hidden" id="procthis_kwargs"/>
+            <div class="control-group">
+              <label class="control-label" for="procthis_name">Rule name</label>
+              <div class="controls">
+                <input class="field span4" type="text" id="procthis_name" name="procthis_name" placeholder="e.g. Email Calimap">
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="query_string">Condition</label>
+              <div class="controls">
+                <textarea class="field span4" type="textarea" rows="5" id="procthis_query_string" name="query_string"></textarea>
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="workflow">Action</label>
+              <div class="controls">
+                <select class="field span4" name="workflow" id="procthis_workflow"></select>
+              </div>
+            </div>
+            <fieldset id="procthis_dynamic_fields" />
+          </form>
+        </div>
+        <div>
+          <label id="procthis_ajax_error" class="error" style="display: block;"></label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn cancel_rule" data-dismiss="modal" aria-hidden="true">Cancel</button>
+        <button id="procthis_btn" class="btn btn-primary">Process Now</button>
+      </div>
+    </div>
+
+    <!-- list my rules modal -->
+    <div id="list_rules_modal" class="modal hide fade list_rules_modal" tabindex="-1" role="dialog"
+         aria-labelledby="list_rules_modal_label" aria-hidden="true" data-backdrop="static"
+         data-keyboard="false">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="list_rules_modal_label">My Rules</h3>
+      </div>
+      <div class="modal-body">
+        <div class="modal-body-div">
+          <table id="rules_table" cellspacing="1" cellpadding="3" class="tablehead" style="background:#CCC;">
+            <caption>
+              These are the rules you have defined.
+            </caption>
+            <thead>
+              <tr class="colhead">
+                <th>Name</th>
+                <th>Condition</th>
+                <th>Action</th>
+                <th>Keyword Args</th>
+                <th class="{sorter: false}">Status</th>
+                <th class="{sorter: false}">Edit</th>
+                <th class="{sorter: false}">Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn close_list_rules" data-dismiss="modal" aria-hidden="true">Close</button>
+      </div>
+    </div>
+
+    <!-- confirm deletion modal -->
+    <div id="confirm_delete_modal" class="modal hide fade" tabindex="-1" role="dialog"
+         aria-labelledby="confirm_delete_modal_label" aria-hidden="true" data-backdrop="static"
+         data-keyboard="false">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="confirm_delete_modal_label">Delete Confirmation</h3>
+      </div>
+      <div class="modal-body">
+        <div class="modal-body-div">
+          <p>Are you sure you want to delete the rule named "<b id="delete_rule_name"></b>"?</p>
+          <input type="hidden" id="delete_rule_id"/>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn cancel_confirm_delete" data-dismiss="modal" aria-hidden="true">No</button>
+        <button id="confirm_delete_btn" class="btn btn-primary confirm_delete">Yes</button>
+      </div>
+    </div>
+
+    <!-- error message modal -->
+    <div id="error_modal" class="modal hide fade error_modal" tabindex="-1" role="dialog"
+         aria-labelledby="error_modal_label" aria-hidden="true" data-backdrop="static"
+         data-keyboard="false">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="error_modal_label">Encountered Error</h3>
+      </div>
+      <div class="modal-body">
+        <div class="modal-body-div"><label id="general_error" class="error" style="display: block;"></label></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn close_error" data-dismiss="modal" aria-hidden="true">Close</button>
+      </div>
+    </div>
+
+    <!-- GRQ call modal -->
+    <div id="grq_call_modal" class="modal hide fade grq_call_modal" tabindex="-1" role="dialog"
+         aria-labelledby="grq_call_modal_label" aria-hidden="true" data-backdrop="static"
+         data-keyboard="false">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="grq_call_modal_label">GRQ REST URL</h3>
+      </div>
+      <div class="modal-body">
+        <div class="modal-body-div"><label id="grq_call_url" style="display: block;"></label></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn close_error" data-dismiss="modal" aria-hidden="true">Close</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</body>
+</html>
