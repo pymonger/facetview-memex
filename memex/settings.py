@@ -3,9 +3,9 @@ class Config(object):
     ELASTICSEARCH_URL = 'http://127.0.0.1:9200'
 
     # for MEMEX app
-    MEMEX_ELASTICSEARCH_INDEX = 'memex'
-    MEMEX_ELASTICSEARCH_SETTINGS = '../config/es_settings-memex.json'
-    MEMEX_ELASTICSEARCH_MAPPING = '../config/es_mapping-memex.json'
+    MEMEX_ELASTICSEARCH_INDEX = 'mrs2'
+    MEMEX_ELASTICSEARCH_SETTINGS = '../config/es_settings.json'
+    MEMEX_ELASTICSEARCH_MAPPING = '../config/es_mapping.json'
 
 
 class ProdConfig(Config):

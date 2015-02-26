@@ -1,6 +1,6 @@
 {
   "order" : 0,
-  "template" : "memex*",
+  "template" : "mrs*",
   "settings" : {
     "index.refresh_interval" : "5s"
   },
